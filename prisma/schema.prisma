@@ -20,6 +20,8 @@ model User {
   email             String         @unique
   name              String?
   phone             String?
+  document          String?        // CPF/CNPJ
+  ip                String?        // IP da compra
   password          String?        // Null para primeiro login
   role              String         @default("USER") // "ADMIN" ou "USER"
   isActive          Boolean        @default(true)

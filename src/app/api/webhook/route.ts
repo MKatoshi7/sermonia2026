@@ -16,14 +16,29 @@ export async function POST(req: NextRequest) {
         });
 
         // 2. Process the event
-        // Extract user info. GCheckout/Green usually sends flattened or nested data.
-        const email = payload.email || payload.customer?.email || payload.buyer?.email;
-        const name = payload.name || payload.customer?.name || payload.buyer?.name;
-        const phone = payload.phone || payload.customer?.phone || payload.buyer?.phone || payload.customer?.mobile;
+        // Extract data based on GCheckout structure provided by user
+        const customer = payload.customer || {};
+        const email = customer.email || payload.email || payload.buyer?.email;
+
+        // User Name: prioritize customer object
+        let userName = customer.name || payload.buyer?.name;
+        // If no customer object, maybe payload.name is the user, but user said payload.name is product. 
+        // So we trust customer.name first.
+
+        const phone = customer.phone || customer.mobile || payload.phone || payload.buyer?.phone;
+        const document = customer.document || payload.document; // CPF/CNPJ
+        const ip = customer.ip || payload.ip;
+        const purchaseDate = payload.createdAt ? new Date(payload.createdAt) : new Date();
+
         const status = payload.status || payload.transaction?.status || payload.current_status;
 
-        // Extract Product Name for categorization
-        const productName = payload.product_name || payload.product?.name || payload.offer?.title || 'Plano Padrão';
+        // Extract Product Name
+        // User specified: "name": "SermonIA Pro" at root is the product name
+        let productName = payload.product_name || payload.product?.name || payload.offer?.title;
+        if (!productName && payload.name) {
+            productName = payload.name;
+        }
+        if (!productName) productName = 'Plano Padrão';
 
         // GCheckout specific: 'paid', 'approved', 'authorized'
         const statusLower = String(status).toLowerCase();
@@ -45,9 +60,11 @@ export async function POST(req: NextRequest) {
                 // Create new user
                 user = await prisma.user.create({
                     data: {
-                        name: name || email.split('@')[0],
+                        name: userName || email.split('@')[0],
                         email,
                         phone: phone || '',
+                        document: document || null,
+                        ip: ip || null,
                         password: null, // Needs to set password
                         needsPasswordSet: true,
                         role: 'USER',
@@ -55,10 +72,16 @@ export async function POST(req: NextRequest) {
                     }
                 });
             } else {
-                // Update user if needed (e.g. phone)
-                if (phone && !user.phone) {
-                    await prisma.user.update({ where: { id: user.id }, data: { phone } });
+                // Update user if needed
+                const updateData: any = {};
+                if (phone && !user.phone) updateData.phone = phone;
+                if (document && !user.document) updateData.document = document;
+                if (ip) updateData.ip = ip; // Update IP on new purchase
+
+                if (Object.keys(updateData).length > 0) {
+                    await prisma.user.update({ where: { id: user.id }, data: updateData });
                 }
+
                 // Ensure active
                 if (!user.isActive) {
                     await prisma.user.update({ where: { id: user.id }, data: { isActive: true } });
@@ -95,7 +118,7 @@ export async function POST(req: NextRequest) {
                             userId: user.id,
                             planId: plan.id,
                             status: 'ACTIVE',
-                            startDate: new Date(),
+                            startDate: purchaseDate, // Use purchase date from webhook
                             externalId: String(payload.id || payload.transaction_id || payload.code || '')
                         }
                     });
