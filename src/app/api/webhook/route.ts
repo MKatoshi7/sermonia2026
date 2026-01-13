@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
         }
         if (!productName) productName = 'Plano Padrão';
 
-        // GCheckout specific: 'paid', 'approved', 'authorized'
+        // GCheckout specific: 'paid', 'approved', 'completed', 'succeeded', 'authorized'
         const statusLower = String(status).toLowerCase();
         const isApproved = ['paid', 'approved', 'completed', 'succeeded', 'authorized'].includes(statusLower);
 
@@ -52,42 +52,42 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: true, message: 'Logged but email missing' });
         }
 
-        if (isApproved) {
-            // 3. Find or Create User
-            let user = await prisma.user.findUnique({ where: { email } });
+        // 3. Find or Create User (Always process user data to capture leads)
+        let user = await prisma.user.findUnique({ where: { email } });
 
-            if (!user) {
-                // Create new user
-                user = await prisma.user.create({
-                    data: {
-                        name: userName || email.split('@')[0],
-                        email,
-                        phone: phone || '',
-                        document: document || null,
-                        ip: ip || null,
-                        password: null, // Needs to set password
-                        needsPasswordSet: true,
-                        role: 'USER',
-                        isActive: true
-                    }
-                });
-            } else {
-                // Update user if needed
-                const updateData: any = {};
-                if (phone && !user.phone) updateData.phone = phone;
-                if (document && !user.document) updateData.document = document;
-                if (ip) updateData.ip = ip; // Update IP on new purchase
-
-                if (Object.keys(updateData).length > 0) {
-                    await prisma.user.update({ where: { id: user.id }, data: updateData });
+        if (!user) {
+            // Create new user
+            user = await prisma.user.create({
+                data: {
+                    name: userName || email.split('@')[0],
+                    email,
+                    phone: phone || '',
+                    document: document || null,
+                    ip: ip || null,
+                    password: null, // Needs to set password
+                    needsPasswordSet: true,
+                    role: 'USER',
+                    isActive: true
                 }
+            });
+        } else {
+            // Update user if needed
+            const updateData: any = {};
+            if (phone && !user.phone) updateData.phone = phone;
+            if (document && !user.document) updateData.document = document;
+            if (ip) updateData.ip = ip; // Update IP on new purchase
 
-                // Ensure active
-                if (!user.isActive) {
-                    await prisma.user.update({ where: { id: user.id }, data: { isActive: true } });
-                }
+            if (Object.keys(updateData).length > 0) {
+                await prisma.user.update({ where: { id: user.id }, data: updateData });
             }
 
+            // Ensure active
+            if (!user.isActive) {
+                await prisma.user.update({ where: { id: user.id }, data: { isActive: true } });
+            }
+        }
+
+        if (isApproved) {
             // 4. Create/Update Subscription based on Product Name
             // Try to find a plan that matches the product name (fuzzy match or exact)
             let plan = await prisma.plan.findFirst({
@@ -134,7 +134,6 @@ export async function POST(req: NextRequest) {
             }
         } else if (['refunded', 'chargedback', 'cancelled'].includes(statusLower)) {
             // Handle cancellation/refund
-            const user = await prisma.user.findUnique({ where: { email } });
             if (user) {
                 // Deactivate subscription
                 await prisma.subscription.updateMany({
