@@ -30,6 +30,7 @@ import {
 import { UsersManagement } from '@/components/admin/UsersManagement';
 import { SermonsManagement } from '@/components/admin/SermonsManagement';
 import { ApiKeyOnboardingModal } from '@/components/onboarding/ApiKeyOnboardingModal';
+import { AlertModal } from '@/components/ui/AlertModal';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -47,6 +48,26 @@ export default function DashboardPage() {
     const [webhooks, setWebhooks] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showOnboarding, setShowOnboarding] = useState(false);
+
+    // Alert State
+    const [alertState, setAlertState] = useState<{
+        isOpen: boolean;
+        message: string;
+        type: 'success' | 'error' | 'info';
+        title?: string;
+    }>({
+        isOpen: false,
+        message: '',
+        type: 'info'
+    });
+
+    const showAlert = (message: string, type: 'success' | 'error' | 'info' = 'info', title?: string) => {
+        setAlertState({ isOpen: true, message, type, title });
+    };
+
+    const closeAlert = () => {
+        setAlertState(prev => ({ ...prev, isOpen: false }));
+    };
 
     const checkApiKey = async (authToken: string, userData: any) => {
         // Não mostrar para admins
@@ -166,10 +187,13 @@ export default function DashboardPage() {
                 localStorage.setItem('sermonia_user', JSON.stringify(data.user));
                 checkApiKey(data.token, data.user);
             } else {
-                setLoginError(data.error || 'Credenciais inválidas');
+                const msg = data.error || 'Credenciais inválidas';
+                setLoginError(msg);
+                showAlert(msg, 'error', 'Falha no Login');
             }
         } catch (error) {
             setLoginError('Erro de conexão');
+            showAlert('Erro de conexão com o servidor', 'error', 'Erro de Rede');
         }
     };
 
@@ -193,6 +217,13 @@ export default function DashboardPage() {
     if (!token || !user) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 flex items-center justify-center p-4">
+                <AlertModal
+                    isOpen={alertState.isOpen}
+                    onClose={closeAlert}
+                    message={alertState.message}
+                    type={alertState.type}
+                    title={alertState.title}
+                />
                 <div className="w-full max-w-md">
                     <button
                         onClick={() => router.push('/')}
@@ -296,6 +327,13 @@ export default function DashboardPage() {
     // Dashboard com Sidebar
     return (
         <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
+            <AlertModal
+                isOpen={alertState.isOpen}
+                onClose={closeAlert}
+                message={alertState.message}
+                type={alertState.type}
+                title={alertState.title}
+            />
             {user?.role !== 'ADMIN' && (
                 <ApiKeyOnboardingModal
                     isOpen={showOnboarding}

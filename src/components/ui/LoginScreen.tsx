@@ -5,6 +5,8 @@ import { Eye, EyeOff, Mail, Lock, ArrowRight, Globe } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ForgotPasswordModal } from '../auth/ForgotPasswordModal';
 
+import { AlertModal } from './AlertModal';
+
 export default function LoginScreen() {
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +18,26 @@ export default function LoginScreen() {
     const { t, language, setLanguage } = useLanguage();
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
     const [isForgotOpen, setIsForgotOpen] = useState(false);
+
+    // Alert State
+    const [alertState, setAlertState] = useState<{
+        isOpen: boolean;
+        message: string;
+        type: 'success' | 'error' | 'info';
+        title?: string;
+    }>({
+        isOpen: false,
+        message: '',
+        type: 'info'
+    });
+
+    const showAlert = (message: string, type: 'success' | 'error' | 'info' = 'info', title?: string) => {
+        setAlertState({ isOpen: true, message, type, title });
+    };
+
+    const closeAlert = () => {
+        setAlertState(prev => ({ ...prev, isOpen: false }));
+    };
 
     const languages = [
         { code: 'es', label: 'Español', flag: 'https://flagcdn.com/w40/es.png' },
@@ -50,15 +72,15 @@ export default function LoginScreen() {
                     localStorage.setItem('sermonia_user', JSON.stringify(data.user));
                     window.location.href = '/';
                 } else {
-                    alert(t('common.success'));
+                    showAlert(t('common.success'), 'success');
                     setIsLogin(true);
                 }
             } else {
-                alert(data.error || 'Erro ao processar');
+                showAlert(data.error || 'Erro ao processar', 'error', 'Atenção');
             }
         } catch (error) {
             console.error(error);
-            alert('Erro de conexão');
+            showAlert('Erro de conexão. Verifique sua internet.', 'error', 'Erro de Conexão');
         } finally {
             setIsLoading(false);
         }
@@ -76,6 +98,13 @@ export default function LoginScreen() {
 
     return (
         <div className="w-full min-h-screen flex flex-col md:flex-row">
+            <AlertModal
+                isOpen={alertState.isOpen}
+                onClose={closeAlert}
+                message={alertState.message}
+                type={alertState.type}
+                title={alertState.title}
+            />
             {/* Left side - Hero section */}
             <div className="flex-1 relative overflow-hidden flex items-center justify-center p-12">
                 {/* Background Image with Overlay */}
