@@ -58,6 +58,13 @@ export const ApiKeyOnboardingModal: React.FC<ApiKeyOnboardingModalProps> = ({ is
                         <Key className="w-32 h-32 transform rotate-12" />
                     </div>
 
+                    <button
+                        onClick={onClose}
+                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-20"
+                    >
+                        <X className="w-5 h-5 text-white" />
+                    </button>
+
                     <div className="relative z-10">
                         <div className="flex items-center gap-3 mb-2">
                             <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
@@ -184,14 +191,22 @@ export const ApiKeyOnboardingModal: React.FC<ApiKeyOnboardingModalProps> = ({ is
                                                 <CheckCircle className="w-5 h-5" />
                                                 {t('onboarding.save')}
                                             </>
+                                            </>
                                         )}
-                                    </button>
-                                </div>
+                                </button>
+
+                                <button
+                                    onClick={onClose}
+                                    className="w-full text-gray-500 hover:text-gray-700 font-medium py-2 transition-colors text-sm"
+                                >
+                                    {t('onboarding.later')}
+                                </button>
                             </div>
                         </div>
+                        </div>
                     )}
-                </div>
             </div>
         </div>
+        </div >
     );
 };

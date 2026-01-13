@@ -212,6 +212,7 @@ export const translations = {
             success: "¡Clave guardada con éxito!",
             error: "Error al guardar la clave. Inténtalo de nuevo.",
             accessButton: "Ir a Google AI Studio",
+            later: "Configurar más tarde",
         }
     },
     en: {
@@ -425,6 +426,7 @@ export const translations = {
             success: "Key saved successfully!",
             error: "Error saving key. Please try again.",
             accessButton: "Go to Google AI Studio",
+            later: "Configure later",
         }
     },
     pt: {
@@ -638,6 +640,7 @@ export const translations = {
             success: "Chave salva com sucesso!",
             error: "Erro ao salvar a chave. Tente novamente.",
             accessButton: "Ir para o Google AI Studio",
+            later: "Configurar mais tarde",
         }
     }
 };

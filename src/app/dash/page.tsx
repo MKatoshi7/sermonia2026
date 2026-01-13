@@ -48,7 +48,10 @@ export default function DashboardPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [showOnboarding, setShowOnboarding] = useState(false);
 
-    const checkApiKey = async (authToken: string) => {
+    const checkApiKey = async (authToken: string, userData: any) => {
+        // Não mostrar para admins
+        if (userData?.role === 'ADMIN') return;
+
         try {
             const response = await fetch('/api/user/api-key', {
                 headers: { 'Authorization': `Bearer ${authToken}` }
@@ -79,8 +82,9 @@ export default function DashboardPage() {
         if (savedToken && savedUser) {
             try {
                 setToken(savedToken);
-                setUser(JSON.parse(savedUser));
-                checkApiKey(savedToken);
+                const parsedUser = JSON.parse(savedUser);
+                setUser(parsedUser);
+                checkApiKey(savedToken, parsedUser);
             } catch (e) {
                 console.error('Erro ao carregar sessão', e);
             }
@@ -160,7 +164,7 @@ export default function DashboardPage() {
                 setUser(data.user);
                 localStorage.setItem('sermonia_token', data.token);
                 localStorage.setItem('sermonia_user', JSON.stringify(data.user));
-                checkApiKey(data.token);
+                checkApiKey(data.token, data.user);
             } else {
                 setLoginError(data.error || 'Credenciais inválidas');
             }

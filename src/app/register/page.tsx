@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function RegisterPage() {
     const router = useRouter();
-    const { t } = useLanguage();
+    const { t, language, setLanguage } = useLanguage();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -93,7 +93,34 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center p-4 relative">
+            {/* Language Selector */}
+            <div className="absolute top-4 right-4 z-10">
+                <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm p-2 rounded-lg shadow-sm border border-slate-200">
+                    <button
+                        onClick={() => setLanguage('es')}
+                        className={`w-8 h-6 rounded overflow-hidden transition-opacity ${language === 'es' ? 'opacity-100 ring-2 ring-indigo-500' : 'opacity-50 hover:opacity-100'}`}
+                        title="Español"
+                    >
+                        <img src="https://flagcdn.com/w40/es.png" alt="Español" className="w-full h-full object-cover" />
+                    </button>
+                    <button
+                        onClick={() => setLanguage('en')}
+                        className={`w-8 h-6 rounded overflow-hidden transition-opacity ${language === 'en' ? 'opacity-100 ring-2 ring-indigo-500' : 'opacity-50 hover:opacity-100'}`}
+                        title="English"
+                    >
+                        <img src="https://flagcdn.com/w40/us.png" alt="English" className="w-full h-full object-cover" />
+                    </button>
+                    <button
+                        onClick={() => setLanguage('pt')}
+                        className={`w-8 h-6 rounded overflow-hidden transition-opacity ${language === 'pt' ? 'opacity-100 ring-2 ring-indigo-500' : 'opacity-50 hover:opacity-100'}`}
+                        title="Português"
+                    >
+                        <img src="https://flagcdn.com/w40/br.png" alt="Português" className="w-full h-full object-cover" />
+                    </button>
+                </div>
+            </div>
+
             <div className="max-w-md w-full">
                 {/* Logo e Header */}
                 <div className="text-center mb-8">
