@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import { BookOpen, Mail, Lock, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function RegisterPage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -16,10 +18,10 @@ export default function RegisterPage() {
     const [success, setSuccess] = useState(false);
 
     const validatePassword = (pass: string) => {
-        if (pass.length < 8) return 'A senha deve ter no mínimo 8 caracteres';
-        if (!/[A-Z]/.test(pass)) return 'A senha deve conter pelo menos uma letra maiúscula';
-        if (!/[a-z]/.test(pass)) return 'A senha deve conter pelo menos uma letra minúscula';
-        if (!/[0-9]/.test(pass)) return 'A senha deve conter pelo menos um número';
+        if (pass.length < 8) return t('auth.reqMinChars');
+        if (!/[A-Z]/.test(pass)) return t('auth.reqUpperCase');
+        if (!/[a-z]/.test(pass)) return t('auth.reqLowerCase');
+        if (!/[0-9]/.test(pass)) return t('auth.reqNumber');
         return null;
     };
 
@@ -29,7 +31,7 @@ export default function RegisterPage() {
 
         // Validações
         if (!email) {
-            setError('Por favor, insira seu e-mail');
+            setError(t('auth.enterEmail'));
             return;
         }
 
@@ -40,7 +42,7 @@ export default function RegisterPage() {
         }
 
         if (password !== confirmPassword) {
-            setError('As senhas não coincidem');
+            setError(t('auth.passwordsDoNotMatch'));
             return;
         }
 
@@ -56,7 +58,7 @@ export default function RegisterPage() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Erro ao criar senha');
+                throw new Error(data.error || t('auth.errorCreatingPassword'));
             }
 
             setSuccess(true);
@@ -67,7 +69,7 @@ export default function RegisterPage() {
             }, 2000);
 
         } catch (err: any) {
-            setError(err.message || 'Erro ao processar sua solicitação');
+            setError(err.message || t('auth.errorProcessing'));
         } finally {
             setIsLoading(false);
         }
@@ -80,9 +82,9 @@ export default function RegisterPage() {
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <CheckCircle className="w-12 h-12 text-green-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-3">Senha Criada com Sucesso!</h2>
+                    <h2 className="text-2xl font-bold text-slate-900 mb-3">{t('auth.passwordSuccessTitle')}</h2>
                     <p className="text-slate-600 mb-6">
-                        Sua conta foi ativada. Você será redirecionado para o login...
+                        {t('auth.passwordSuccessDesc')}
                     </p>
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
                 </div>
@@ -98,8 +100,8 @@ export default function RegisterPage() {
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mb-4 shadow-lg">
                         <BookOpen className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold text-slate-900 mb-2">Bem-vindo ao Sermonia</h1>
-                    <p className="text-slate-600">Crie sua senha para acessar a plataforma</p>
+                    <h1 className="text-3xl font-bold text-slate-900 mb-2">{t('auth.welcomeSermonia')}</h1>
+                    <p className="text-slate-600">{t('auth.createPasswordTitle')}</p>
                 </div>
 
                 {/* Card Principal */}
@@ -109,9 +111,9 @@ export default function RegisterPage() {
                         <div className="flex gap-3">
                             <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                             <div className="text-sm text-blue-900">
-                                <p className="font-semibold mb-1">Primeiro Acesso</p>
+                                <p className="font-semibold mb-1">{t('auth.firstAccess')}</p>
                                 <p className="text-blue-700">
-                                    Use o e-mail que você recebeu no link de acesso e crie uma senha segura para sua conta.
+                                    {t('auth.firstAccessDesc')}
                                 </p>
                             </div>
                         </div>
@@ -122,7 +124,7 @@ export default function RegisterPage() {
                         {/* E-mail */}
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                E-mail
+                                {t('auth.email')}
                             </label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -131,7 +133,7 @@ export default function RegisterPage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full pl-11 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
-                                    placeholder="seu@email.com"
+                                    placeholder={t('auth.emailPlaceholder')}
                                     required
                                 />
                             </div>
@@ -140,7 +142,7 @@ export default function RegisterPage() {
                         {/* Senha */}
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Nova Senha
+                                {t('auth.newPassword')}
                             </label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -149,7 +151,7 @@ export default function RegisterPage() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full pl-11 pr-12 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
-                                    placeholder="Crie uma senha forte"
+                                    placeholder={t('auth.passwordPlaceholder')}
                                     required
                                 />
                                 <button
@@ -165,7 +167,7 @@ export default function RegisterPage() {
                         {/* Confirmar Senha */}
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Confirmar Senha
+                                {t('auth.confirmPassword')}
                             </label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -174,7 +176,7 @@ export default function RegisterPage() {
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     className="w-full pl-11 pr-12 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
-                                    placeholder="Digite a senha novamente"
+                                    placeholder={t('auth.confirmPasswordPlaceholder')}
                                     required
                                 />
                                 <button
@@ -189,23 +191,23 @@ export default function RegisterPage() {
 
                         {/* Requisitos de Senha */}
                         <div className="bg-slate-50 rounded-xl p-4">
-                            <p className="text-xs font-semibold text-slate-700 mb-2">Requisitos da senha:</p>
+                            <p className="text-xs font-semibold text-slate-700 mb-2">{t('auth.passwordRequirements')}</p>
                             <ul className="space-y-1 text-xs text-slate-600">
                                 <li className="flex items-center gap-2">
                                     <div className={`w-1.5 h-1.5 rounded-full ${password.length >= 8 ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                                    Mínimo de 8 caracteres
+                                    {t('auth.reqMinChars')}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <div className={`w-1.5 h-1.5 rounded-full ${/[A-Z]/.test(password) ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                                    Pelo menos uma letra maiúscula
+                                    {t('auth.reqUpperCase')}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <div className={`w-1.5 h-1.5 rounded-full ${/[a-z]/.test(password) ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                                    Pelo menos uma letra minúscula
+                                    {t('auth.reqLowerCase')}
                                 </li>
                                 <li className="flex items-center gap-2">
                                     <div className={`w-1.5 h-1.5 rounded-full ${/[0-9]/.test(password) ? 'bg-green-500' : 'bg-slate-300'}`}></div>
-                                    Pelo menos um número
+                                    {t('auth.reqNumber')}
                                 </li>
                             </ul>
                         </div>
@@ -227,12 +229,12 @@ export default function RegisterPage() {
                             {isLoading ? (
                                 <>
                                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                    Criando senha...
+                                    {t('auth.creatingPassword')}
                                 </>
                             ) : (
                                 <>
                                     <CheckCircle className="w-5 h-5" />
-                                    Criar Senha e Acessar
+                                    {t('auth.createPasswordAction')}
                                 </>
                             )}
                         </button>
@@ -242,12 +244,12 @@ export default function RegisterPage() {
                 {/* Footer */}
                 <div className="text-center mt-6">
                     <p className="text-sm text-slate-600">
-                        Já tem uma senha?{' '}
+                        {t('auth.haveAccount')}{' '}
                         <button
                             onClick={() => router.push('/')}
                             className="text-indigo-600 font-semibold hover:text-indigo-700 transition-colors"
                         >
-                            Fazer Login
+                            {t('auth.loginAction')}
                         </button>
                     </p>
                 </div>
@@ -255,10 +257,10 @@ export default function RegisterPage() {
                 {/* Info Adicional */}
                 <div className="mt-8 text-center">
                     <p className="text-xs text-slate-500">
-                        Ao criar sua senha, você concorda com nossos{' '}
-                        <a href="#" className="text-indigo-600 hover:underline">Termos de Uso</a>
-                        {' '}e{' '}
-                        <a href="#" className="text-indigo-600 hover:underline">Política de Privacidade</a>
+                        {t('auth.termsAgreement')}{' '}
+                        <a href="#" className="text-indigo-600 hover:underline">{t('auth.termsOfUse')}</a>
+                        {' '}{t('auth.and')}{' '}
+                        <a href="#" className="text-indigo-600 hover:underline">{t('auth.privacyPolicy')}</a>
                     </p>
                 </div>
             </div>
