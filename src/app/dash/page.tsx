@@ -26,6 +26,7 @@ import {
     Trash2,
     Search,
     RefreshCw,
+    X,
 } from 'lucide-react';
 import { UsersManagement } from '@/components/admin/UsersManagement';
 import { SermonsManagement } from '@/components/admin/SermonsManagement';
@@ -773,60 +774,114 @@ const PlansContent = ({ stats }: any) => (
     </div>
 );
 
-const WebhooksContent = ({ webhooks }: any) => (
-    <div className="space-y-6">
-        <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Monitor de Webhooks</h3>
-            <code className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded text-sm text-indigo-600 dark:text-indigo-400">
-                /api/webhook/purchase
-            </code>
-        </div>
+const WebhooksContent = ({ webhooks }: any) => {
+    const [selectedWebhook, setSelectedWebhook] = useState<any>(null);
 
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-            <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                    <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fonte</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Evento</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {webhooks?.map((w: any) => (
-                        <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                {new Date(w.createdAt).toLocaleString()}
-                            </td>
-                            <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {w.source}
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                {w.eventType}
-                            </td>
-                            <td className="px-6 py-4">
-                                <span className={`px-2 py-1 text-xs font-medium rounded-full ${w.processed
-                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                    : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
-                                    }`}>
-                                    {w.processed ? 'Processado' : 'Pendente'}
-                                </span>
-                                {w.error && <div className="text-xs text-red-500 mt-1">{w.error}</div>}
-                            </td>
-                        </tr>
-                    ))}
-                    {(!webhooks || webhooks.length === 0) && (
+    return (
+        <div className="space-y-6">
+            {selectedWebhook && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setSelectedWebhook(null)}>
+                    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+                            <div>
+                                <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Detalhes do Evento</h3>
+                                <p className="text-xs text-gray-500">{selectedWebhook.eventType} • {new Date(selectedWebhook.createdAt).toLocaleString()}</p>
+                            </div>
+                            <button
+                                onClick={() => setSelectedWebhook(null)}
+                                className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-auto flex-1 bg-slate-50 dark:bg-slate-950 font-mono text-xs">
+                            <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm">
+                                <h4 className="text-xs font-bold text-gray-500 uppercase mb-2">Payload JSON</h4>
+                                <pre className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 overflow-x-auto">
+                                    {(() => {
+                                        try {
+                                            return JSON.stringify(JSON.parse(selectedWebhook.payload), null, 2);
+                                        } catch (e) {
+                                            return selectedWebhook.payload;
+                                        }
+                                    })()}
+                                </pre>
+                            </div>
+                            {selectedWebhook.error && (
+                                <div className="mt-4 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                                    <h4 className="text-xs font-bold text-red-500 uppercase mb-2">Erro</h4>
+                                    <pre className="whitespace-pre-wrap text-red-600 dark:text-red-400">
+                                        {selectedWebhook.error}
+                                    </pre>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Monitor de Webhooks</h3>
+                <code className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded text-sm text-indigo-600 dark:text-indigo-400">
+                    /api/webhook/purchase
+                </code>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+                <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                         <tr>
-                            <td colSpan={4} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                                Nenhum evento registrado
-                            </td>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fonte</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Evento</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ações</th>
                         </tr>
-                    )}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {webhooks?.map((w: any) => (
+                            <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" onClick={() => setSelectedWebhook(w)}>
+                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                    {new Date(w.createdAt).toLocaleString()}
+                                </td>
+                                <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    {w.source}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                    {w.eventType}
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${w.processed
+                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                                        : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+                                        }`}>
+                                        {w.processed ? 'Processado' : 'Pendente'}
+                                    </span>
+                                    {w.error && <div className="text-xs text-red-500 mt-1 truncate max-w-[150px]">{w.error}</div>}
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setSelectedWebhook(w); }}
+                                        className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                                    >
+                                        Ver JSON
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                        {(!webhooks || webhooks.length === 0) && (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    Nenhum evento registrado
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 const AnalyticsContent = ({ stats }: any) => (
     <div className="text-center py-12">
