@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { UsersManagement } from '@/components/admin/UsersManagement';
 import { SermonsManagement } from '@/components/admin/SermonsManagement';
+import { ApiKeyOnboardingModal } from '@/components/onboarding/ApiKeyOnboardingModal';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -45,6 +46,23 @@ export default function DashboardPage() {
     const [users, setUsers] = useState<any[]>([]);
     const [webhooks, setWebhooks] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showOnboarding, setShowOnboarding] = useState(false);
+
+    const checkApiKey = async (authToken: string) => {
+        try {
+            const response = await fetch('/api/user/api-key', {
+                headers: { 'Authorization': `Bearer ${authToken}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (!data.apiKey) {
+                    setShowOnboarding(true);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking API key:', error);
+        }
+    };
 
     useEffect(() => {
         if (isDark) {
@@ -62,6 +80,7 @@ export default function DashboardPage() {
             try {
                 setToken(savedToken);
                 setUser(JSON.parse(savedUser));
+                checkApiKey(savedToken);
             } catch (e) {
                 console.error('Erro ao carregar sessão', e);
             }
@@ -141,6 +160,7 @@ export default function DashboardPage() {
                 setUser(data.user);
                 localStorage.setItem('sermonia_token', data.token);
                 localStorage.setItem('sermonia_user', JSON.stringify(data.user));
+                checkApiKey(data.token);
             } else {
                 setLoginError(data.error || 'Credenciais inválidas');
             }
@@ -272,6 +292,11 @@ export default function DashboardPage() {
     // Dashboard com Sidebar
     return (
         <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
+            <ApiKeyOnboardingModal
+                isOpen={showOnboarding}
+                onClose={() => setShowOnboarding(false)}
+                token={token}
+            />
             <div className="flex w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
                 {/* Sidebar */}
                 <Sidebar
