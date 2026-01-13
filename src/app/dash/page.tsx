@@ -296,11 +296,13 @@ export default function DashboardPage() {
     // Dashboard com Sidebar
     return (
         <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
-            <ApiKeyOnboardingModal
-                isOpen={showOnboarding}
-                onClose={() => setShowOnboarding(false)}
-                token={token}
-            />
+            {user?.role !== 'ADMIN' && (
+                <ApiKeyOnboardingModal
+                    isOpen={showOnboarding}
+                    onClose={() => setShowOnboarding(false)}
+                    token={token}
+                />
+            )}
             <div className="flex w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
                 {/* Sidebar */}
                 <Sidebar
