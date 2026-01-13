@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./sermonia2026.db"
+}
+
+model User {
+  id                String         @id @default(uuid())
+  email             String         @unique
+  name              String?
+  phone             String?
+  password          String?        // Null para primeiro login
+  role              String         @default("USER") // "ADMIN" ou "USER"
+  isActive          Boolean        @default(true)
+  needsPasswordSet  Boolean        @default(false) // True quando criado via webhook
+  resetToken        String?        // Token de recuperação de senha
+  resetTokenExpiry  DateTime?      // Expiração do token
+  apiKey            String?        // API Key do Google Gemini (criptografada)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  sermons           Sermon[]
+  subscriptions     Subscription[]
+}
+
+model Sermon {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   // Stores JSON string
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Plan {
+  id            String         @id @default(uuid())
+  name          String         // "Básico", "Pro", "Premium"
+  description   String?
+  price         Float
+  interval      String         @default("MONTHLY") // "MONTHLY", "YEARLY"
+  features      String         // JSON string com recursos
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                String    @id @default(uuid())
+  userId            String
+  planId            String
+  status            String    @default("ACTIVE") // "ACTIVE", "CANCELLED", "EXPIRED", "PENDING"
+  startDate         DateTime  @default(now())
+  endDate           DateTime?
+  nextBillingDate   DateTime?
+  cancelledAt       DateTime?
+  externalId        String?   // ID da plataforma de pagamento (Stripe, Hotmart, etc)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan              Plan      @relation(fields: [planId], references: [id])
+}
+
+model WebhookEvent {
+  id          String   @id @default(uuid())
+  source      String   // "HOTMART", "STRIPE", "PAGARME", etc
+  eventType   String   // "PURCHASE_COMPLETED", "SUBSCRIPTION_CANCELLED", etc
+  payload     String   // JSON completo do webhook
+  processed   Boolean  @default(false)
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime @default(now())
+}
+
+model SystemSetting {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
