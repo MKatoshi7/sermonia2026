@@ -312,7 +312,7 @@ export default function DashboardPage() {
             case 'Planos':
                 return <PlansContent stats={stats} />;
             case 'Webhooks':
-                return <WebhooksContent webhooks={webhooks} />;
+                return <WebhooksContent webhooks={webhooks} token={token} onRefresh={fetchWebhooks} />;
             case 'Analytics':
                 return <AnalyticsContent stats={stats} />;
             case 'Configurações':
@@ -774,8 +774,27 @@ const PlansContent = ({ stats }: any) => (
     </div>
 );
 
-const WebhooksContent = ({ webhooks }: any) => {
+const WebhooksContent = ({ webhooks, token, onRefresh }: any) => {
     const [selectedWebhook, setSelectedWebhook] = useState<any>(null);
+    const [isClearing, setIsClearing] = useState(false);
+
+    const handleClearLogs = async () => {
+        if (!confirm('Tem certeza que deseja limpar todos os logs? Esta ação não pode ser desfeita.')) return;
+        setIsClearing(true);
+        try {
+            const response = await fetch('/api/admin/webhooks', {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                await onRefresh();
+            }
+        } catch (error) {
+            console.error('Error clearing logs:', error);
+        } finally {
+            setIsClearing(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -821,10 +840,25 @@ const WebhooksContent = ({ webhooks }: any) => {
             )}
 
             <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Monitor de Webhooks</h3>
-                <code className="bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded text-sm text-indigo-600 dark:text-indigo-400">
-                    /api/webhook/purchase
-                </code>
+                <div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Monitor de Webhooks</h3>
+                    <div className="flex flex-col gap-1 mt-1">
+                        <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs text-indigo-600 dark:text-indigo-400 w-fit">
+                            GCheckout: /api/webhook/gcheckout
+                        </code>
+                        <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs text-orange-600 dark:text-orange-400 w-fit">
+                            Hotmart: /api/webhook/hotmart
+                        </code>
+                    </div>
+                </div>
+                <button
+                    onClick={handleClearLogs}
+                    disabled={isClearing || !webhooks?.length}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50 text-sm font-medium"
+                >
+                    <Trash2 className="h-4 w-4" />
+                    {isClearing ? 'Limpando...' : 'Limpar Logs'}
+                </button>
             </div>
 
             <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
@@ -834,6 +868,7 @@ const WebhooksContent = ({ webhooks }: any) => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Data</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fonte</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Evento</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Payload</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
                             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ações</th>
                         </tr>
@@ -841,7 +876,7 @@ const WebhooksContent = ({ webhooks }: any) => {
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {webhooks?.map((w: any) => (
                             <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer" onClick={() => setSelectedWebhook(w)}>
-                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">
                                     {new Date(w.createdAt).toLocaleString()}
                                 </td>
                                 <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -849,6 +884,9 @@ const WebhooksContent = ({ webhooks }: any) => {
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                                     {w.eventType}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate font-mono text-xs">
+                                    {w.payload}
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${w.processed
@@ -871,7 +909,7 @@ const WebhooksContent = ({ webhooks }: any) => {
                         ))}
                         {(!webhooks || webhooks.length === 0) && (
                             <tr>
-                                <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     Nenhum evento registrado
                                 </td>
                             </tr>
